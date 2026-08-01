@@ -35,6 +35,28 @@ suite('Beancount Quick Edit integration', () => {
     );
   });
 
+  test('keeps component-ending caret positions in the preceding date part', async () => {
+    const document = await vscode.workspace.openTextDocument({
+      language: 'beancount',
+      content: '2026-04-16\n2026-04-16\n2026-04-16'
+    });
+    const editor = await vscode.window.showTextDocument(document);
+    editor.selections = [
+      new vscode.Selection(0, 4, 0, 4),
+      new vscode.Selection(1, 7, 1, 7),
+      new vscode.Selection(2, 10, 2, 10)
+    ];
+
+    await vscode.commands.executeCommand('beancountQuickEdit.incrementDatePart');
+    assert.equal(document.lineAt(0).text, '2027-04-16');
+    assert.equal(document.lineAt(1).text, '2026-05-16');
+    assert.equal(document.lineAt(2).text, '2026-04-17');
+    assert.deepEqual(
+      editor.selections.map((selection) => selection.active.character),
+      [4, 7, 10]
+    );
+  });
+
   test('leaves a date unchanged when cursors target conflicting parts', async () => {
     const document = await vscode.workspace.openTextDocument({
       language: 'beancount',

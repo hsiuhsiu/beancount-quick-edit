@@ -2,7 +2,7 @@
   "name": "beancount-quick-edit",
   "displayName": "Beancount Quick Edit",
   "description": "Cursor-aware date adjustment and account copying for Beancount files.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "publisher": "hsiuhsiu",
   "license": "MIT",
   "author": "hsiuhsiu",
@@ -127,7 +127,7 @@
     "test:integration": "npm run compile && vscode-test",
     "test": "npm run test:unit",
     "package:inspect": "vsce ls --tree",
-    "package": "vsce package --no-dependencies --out beancount-quick-edit-0.1.0.vsix",
+    "package": "vsce package --no-dependencies --out beancount-quick-edit-0.1.1.vsix",
     "vscode:prepublish": "npm run compile"
   },
   "overrides": {
