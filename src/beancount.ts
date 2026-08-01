@@ -32,12 +32,14 @@ export function findDateAtCharacter(line: string, character: number): DateToken 
     if (!hasCleanBoundary(line, start, end, ADJACENT_WORD_CHARACTER)) {
       continue;
     }
-    if (character < start || character >= end || !parseIsoDate(text)) {
+    if (character < start || character > end || !parseIsoDate(text)) {
       continue;
     }
 
     const relative = character - start;
-    const part: DatePart = relative < 4 ? 'year' : relative < 7 ? 'month' : 'day';
+    // A caret is an insertion point, so the position immediately after a
+    // component belongs to that component rather than the one to its right.
+    const part: DatePart = relative <= 4 ? 'year' : relative <= 7 ? 'month' : 'day';
     return { start, end, text, part };
   }
 

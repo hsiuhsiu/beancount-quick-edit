@@ -6,18 +6,20 @@ Small, cursor-aware editing commands for Beancount files. Change the year, month
 
 ### Adjust dates at the cursor
 
-Place the caret anywhere inside a valid `YYYY-MM-DD` date, then press:
+Place the caret anywhere from the beginning of a valid `YYYY-MM-DD` date through
+the position immediately after its final digit, then press:
 
 | Platform | Increase | Decrease |
 | --- | --- | --- |
 | macOS | `Option`+`↑` | `Option`+`↓` |
 | Windows / Linux | `Alt`+`↑` | `Alt`+`↓` |
 
-The caret position decides which part changes:
+The caret is an insertion point between characters. The position immediately after
+`YYYY`, `MM`, or `DD` still belongs to that component:
 
-- Year digits change the year.
-- The first hyphen and month digits change the month.
-- The second hyphen and day digits change the day.
+- Before or within `YYYY`, and immediately after it, changes the year.
+- After the first hyphen, within `MM`, and immediately after it, changes the month.
+- After the second hyphen, within `DD`, and immediately after it, changes the day.
 
 Date arithmetic follows the proleptic Gregorian calendar:
 
@@ -72,7 +74,7 @@ Beancount Quick Edit:
 - does not read or write files directly; and
 - accesses only the active editor and, for account copying, the clipboard.
 
-It supports untrusted and virtual workspaces in desktop VS Code because its behavior does not depend on workspace execution or filesystem access. Version 0.1.0 does not include a browser entry for vscode.dev. The shipped JavaScript is bundled but not minified, and includes a source map with embedded source content for inspection.
+It supports untrusted and virtual workspaces in desktop VS Code because its behavior does not depend on workspace execution or filesystem access. The extension does not include a browser entry for vscode.dev. The shipped JavaScript is bundled but not minified, and includes a source map with embedded source content for inspection.
 
 ## Commands
 
@@ -100,7 +102,7 @@ npm run test:integration
 npm run package
 ```
 
-`npm run package` creates `beancount-quick-edit-0.1.0.vsix`. See [CONTRIBUTING.md](CONTRIBUTING.md) for the release workflow.
+`npm run package` creates `beancount-quick-edit-0.1.1.vsix`. See [CONTRIBUTING.md](CONTRIBUTING.md) for the release workflow.
 
 ## License
 

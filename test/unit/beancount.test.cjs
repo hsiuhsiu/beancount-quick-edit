@@ -7,21 +7,41 @@ const {
 } = require('../../lib/beancount.js');
 
 describe('Beancount token matching', () => {
-  test('maps each caret position in an ISO date to year, month, or day', () => {
+  test('maps every caret insertion point in an ISO date to year, month, or day', () => {
     const line = '  2026-08-31 * "Example"';
-    assert.equal(findDateAtCharacter(line, 2).part, 'year');
-    assert.equal(findDateAtCharacter(line, 5).part, 'year');
-    assert.equal(findDateAtCharacter(line, 6).part, 'month');
-    assert.equal(findDateAtCharacter(line, 8).part, 'month');
-    assert.equal(findDateAtCharacter(line, 9).part, 'day');
-    assert.equal(findDateAtCharacter(line, 11).part, 'day');
-    assert.equal(findDateAtCharacter(line, 12), undefined);
+    const expectedParts = [
+      'year',
+      'year',
+      'year',
+      'year',
+      'year',
+      'month',
+      'month',
+      'month',
+      'day',
+      'day',
+      'day'
+    ];
+
+    for (const [relative, part] of expectedParts.entries()) {
+      assert.equal(findDateAtCharacter(line, 2 + relative)?.part, part, `offset ${relative}`);
+    }
+
+    assert.equal(findDateAtCharacter(line, 1), undefined);
+    assert.equal(findDateAtCharacter(line, 13), undefined);
+  });
+
+  test('treats the end of a date at end of line as part of the day', () => {
+    assert.equal(findDateAtCharacter('2026-04-16', 10)?.part, 'day');
+    assert.equal(findDateAtCharacter('2026-04-16', 11), undefined);
   });
 
   test('rejects invalid dates and dates embedded in word-like text', () => {
     assert.equal(findDateAtCharacter('2025-02-29', 8), undefined);
+    assert.equal(findDateAtCharacter('2025-02-29', 10), undefined);
     assert.equal(findDateAtCharacter('x2026-08-31', 5), undefined);
     assert.equal(findDateAtCharacter('2026-08-31x', 5), undefined);
+    assert.equal(findDateAtCharacter('2026-08-31x', 10), undefined);
     assert.equal(findDateAtCharacter('_2026-08-31', 5), undefined);
     assert.equal(findDateAtCharacter('𐐨2026-08-31', 5), undefined);
   });
@@ -29,6 +49,8 @@ describe('Beancount token matching', () => {
   test('finds the date under the caret when a line contains several dates', () => {
     const line = '2026-01-01 note 2027-02-03';
     assert.equal(findDateAtCharacter(line, 2).text, '2026-01-01');
+    assert.equal(findDateAtCharacter(line, 10).text, '2026-01-01');
+    assert.equal(findDateAtCharacter(line, 16).text, '2027-02-03');
     assert.equal(findDateAtCharacter(line, 23).text, '2027-02-03');
   });
 
