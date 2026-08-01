@@ -12,4 +12,4 @@ Include the affected version, reproduction steps, impact, and any suggested miti
 
 ## Security posture
 
-The extension has no runtime dependencies, telemetry, network access, process execution, or direct filesystem access. Its only privileged interaction is writing explicitly requested account text to the VS Code clipboard.
+The extension has no runtime dependencies, telemetry, network access, process execution, or access to ledger or workspace files. Its privileged interactions are limited to the active editor, explicitly requested clipboard writes, and optional VSCodeVim compatibility. For that compatibility path, it activates the installed VSCodeVim extension, reuses its local desktop entry module, and inspects only its in-process pending-command state. It does not download code, launch external programs, or execute workspace-provided code. It falls back to VSCodeVim's own command if the expected internal shape is unavailable.
