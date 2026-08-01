@@ -33,6 +33,37 @@ Changing a day rolls across months and years. Changing a month or year keeps the
 
 Outside a valid date, VS Code keeps its normal `Alt`/`Option`+arrow behavior, including moving lines.
 
+### VSCodeVim: `Ctrl+A` and `Ctrl+X` (opt-in)
+
+When you use the [VSCodeVim](https://marketplace.visualstudio.com/items?itemName=vscodevim.vim)
+extension, Beancount Quick Edit can use Vim's familiar number keys for calendar-aware dates:
+
+| Vim Normal mode | Date action |
+| --- | --- |
+| `Ctrl+A` | Increase the year, month, or day at the caret |
+| `Ctrl+X` | Decrease the year, month, or day at the caret |
+
+On macOS these use the Control key, not Command. To enable them:
+
+1. Open the Command Palette.
+2. Run **Beancount Quick Edit: Set Up VSCodeVim Ctrl+A/X Shortcuts**.
+3. The command copies two keybinding entries and opens `keybindings.json`. Paste them before the
+   final `]`. If the file already contains entries, add a comma after the existing final entry first.
+
+This one-time setup is necessary because VS Code gives user keybindings reliable priority over
+VSCodeVim's defaults; one extension's default keybindings cannot reliably override another's.
+The setup command does not edit the file for you. The copied bindings use VSCodeVim's own
+`vim.remap` command, so pending keys are processed in the same queue as VSCodeVim's native actions.
+
+The bindings take effect only in VSCodeVim Normal mode when every caret is on a valid date in a
+writable Beancount editor. Insert and Visual modes, non-date positions, other languages, and
+read-only editors retain VSCodeVim's behavior. A plain, idle `Ctrl+A` or `Ctrl+X` uses calendar
+arithmetic. If a Vim count or another command prefix is pending, the key is returned to VSCodeVim
+instead; for example, `3 Ctrl+A` keeps Vim's native numeric behavior and consumes the count safely.
+
+The compatibility path is tested with VSCodeVim 1.32.4 and fails closed to native VSCodeVim
+handling if the inspected pending-command state is not recognized.
+
 ### Copy the complete account at the cursor
 
 Normal double-click word selection remains unchanged. Place the caret anywhere inside an account such as `Assets:Bank:Checking`, then press:
@@ -71,10 +102,20 @@ Beancount Quick Edit:
 - makes no network requests;
 - contains no telemetry;
 - does not launch processes or shell commands;
-- does not read or write files directly; and
-- accesses only the active editor and, for account copying, the clipboard.
+- does not read or write ledger or workspace files directly; and
+- accesses only the active editor, the installed VSCodeVim module for pending-command compatibility,
+  and the clipboard when you explicitly copy an account or set up Vim shortcuts.
 
-It supports untrusted and virtual workspaces in desktop VS Code because its behavior does not depend on workspace execution or filesystem access. The extension does not include a browser entry for vscode.dev. The shipped JavaScript is bundled but not minified, and includes a source map with embedded source content for inspection.
+VSCodeVim does not publish its pending-command state through VS Code's public extension API. After
+VS Code activates the already-installed VSCodeVim extension, the optional adapter reuses that same
+local module and inspects only its in-process command state. It does not download or launch any
+external program, and it does not execute workspace-provided code. If that internal shape changes,
+the shortcut delegates to VSCodeVim instead of editing the date.
+
+It supports untrusted and virtual workspaces in desktop VS Code because its behavior does not
+depend on workspace code or workspace filesystem access. The extension does not include a browser
+entry for vscode.dev. The shipped JavaScript is bundled but not minified, and includes a source map
+with embedded source content for inspection.
 
 ## Commands
 
@@ -83,6 +124,7 @@ Open the Command Palette and search for **Beancount Quick Edit**:
 - `Beancount Quick Edit: Increment Date Part`
 - `Beancount Quick Edit: Decrement Date Part`
 - `Beancount Quick Edit: Copy Account at Cursor`
+- `Beancount Quick Edit: Set Up VSCodeVim Ctrl+A/X Shortcuts`
 
 All shortcuts can be reassigned through VS Code's Keyboard Shortcuts editor.
 
@@ -102,7 +144,7 @@ npm run test:integration
 npm run package
 ```
 
-`npm run package` creates `beancount-quick-edit-0.1.1.vsix`. See [CONTRIBUTING.md](CONTRIBUTING.md) for the release workflow.
+`npm run package` creates `beancount-quick-edit-0.2.0.vsix`. See [CONTRIBUTING.md](CONTRIBUTING.md) for the release workflow.
 
 ## License
 

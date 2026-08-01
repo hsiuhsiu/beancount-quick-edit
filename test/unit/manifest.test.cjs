@@ -3,6 +3,10 @@ const { describe, test } = require('node:test');
 const manifest = require('../../package.json');
 
 describe('extension manifest', () => {
+  test('uses the 0.2.0 minor version for VSCodeVim shortcut support', () => {
+    assert.equal(manifest.version, '0.2.0');
+  });
+
   test('ships no runtime dependencies or install lifecycle scripts', () => {
     assert.equal(manifest.dependencies, undefined);
     assert.equal(manifest.scripts.preinstall, undefined);
@@ -31,5 +35,17 @@ describe('extension manifest', () => {
     assert.match(accountBinding.when, /beancountQuickEdit\.cursorInAccount/);
     assert.equal(manifest.capabilities.untrustedWorkspaces.supported, true);
     assert.equal(manifest.capabilities.virtualWorkspaces, true);
+  });
+
+  test('exposes opt-in VSCodeVim commands without unreliable default Ctrl bindings', () => {
+    const commandIds = manifest.contributes.commands.map(({ command }) => command);
+    assert.ok(commandIds.includes('beancountQuickEdit.vimIncrementDatePart'));
+    assert.ok(commandIds.includes('beancountQuickEdit.vimDecrementDatePart'));
+    assert.ok(commandIds.includes('beancountQuickEdit.setupVscodeVimShortcuts'));
+
+    const ctrlBindings = manifest.contributes.keybindings.filter(({ key }) =>
+      ['ctrl+a', 'ctrl+x'].includes(key)
+    );
+    assert.deepEqual(ctrlBindings, []);
   });
 });

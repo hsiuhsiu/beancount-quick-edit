@@ -2,7 +2,7 @@
   "name": "beancount-quick-edit",
   "displayName": "Beancount Quick Edit",
   "description": "Cursor-aware date adjustment and account copying for Beancount files.",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "publisher": "hsiuhsiu",
   "license": "MIT",
   "author": "hsiuhsiu",
@@ -19,7 +19,9 @@
     "ledger",
     "date",
     "cursor",
-    "productivity"
+    "productivity",
+    "vim",
+    "vscodevim"
   ],
   "pricing": "Free",
   "icon": "images/icon.png",
@@ -80,6 +82,23 @@
         "title": "Copy Account at Cursor",
         "category": "Beancount Quick Edit",
         "enablement": "editorLangId == beancount && beancountQuickEdit.cursorInAccount"
+      },
+      {
+        "command": "beancountQuickEdit.vimIncrementDatePart",
+        "title": "Increment Date Part (VSCodeVim)",
+        "category": "Beancount Quick Edit",
+        "enablement": "editorLangId == beancount && beancountQuickEdit.cursorInDate && !editorReadonly && vim.active && vim.mode == 'Normal'"
+      },
+      {
+        "command": "beancountQuickEdit.vimDecrementDatePart",
+        "title": "Decrement Date Part (VSCodeVim)",
+        "category": "Beancount Quick Edit",
+        "enablement": "editorLangId == beancount && beancountQuickEdit.cursorInDate && !editorReadonly && vim.active && vim.mode == 'Normal'"
+      },
+      {
+        "command": "beancountQuickEdit.setupVscodeVimShortcuts",
+        "title": "Set Up VSCodeVim Ctrl+A/X Shortcuts",
+        "category": "Beancount Quick Edit"
       }
     ],
     "keybindings": [
@@ -115,6 +134,14 @@
         {
           "command": "beancountQuickEdit.copyAccount",
           "when": "editorLangId == beancount"
+        },
+        {
+          "command": "beancountQuickEdit.vimIncrementDatePart",
+          "when": "false"
+        },
+        {
+          "command": "beancountQuickEdit.vimDecrementDatePart",
+          "when": "false"
         }
       ]
     }
@@ -127,7 +154,7 @@
     "test:integration": "npm run compile && vscode-test",
     "test": "npm run test:unit",
     "package:inspect": "vsce ls --tree",
-    "package": "vsce package --no-dependencies --out beancount-quick-edit-0.1.1.vsix",
+    "package": "vsce package --no-dependencies --out beancount-quick-edit-0.2.0.vsix",
     "vscode:prepublish": "npm run compile"
   },
   "overrides": {

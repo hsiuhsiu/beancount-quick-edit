@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { createRequire } from 'node:module';
 import { findAccountAtCharacter, findDateAtCharacter } from './beancount';
 import {
   buildDateReplacements,
@@ -7,16 +8,41 @@ import {
   LocatedDate,
   normalizeDateTargets
 } from './operations';
+import {
+  buildVimKeybindingsSnippet,
+  canHandlePlainVimShortcut,
+  isVimModeHandlerLike,
+  VIM_DECREMENT_COMMAND,
+  VIM_INCREMENT_COMMAND,
+  VimModeHandlerLike,
+  VSCODE_VIM_EXTENSION_ID
+} from './vscodeVim';
 
 const LANGUAGE_ID = 'beancount';
 const DATE_CONTEXT = 'beancountQuickEdit.cursorInDate';
 const ACCOUNT_CONTEXT = 'beancountQuickEdit.cursorInAccount';
+const VIM_CTRL_A_COMMAND = 'extension.vim_ctrl+a';
+const VIM_CTRL_X_COMMAND = 'extension.vim_ctrl+x';
+
+interface VSCodeVimExports {
+  getAndUpdateModeHandler?: () => Promise<unknown>;
+}
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
   context.subscriptions.push(
     vscode.commands.registerCommand('beancountQuickEdit.incrementDatePart', () => adjustDates(1)),
     vscode.commands.registerCommand('beancountQuickEdit.decrementDatePart', () => adjustDates(-1)),
     vscode.commands.registerCommand('beancountQuickEdit.copyAccount', copyAccounts),
+    vscode.commands.registerCommand(VIM_INCREMENT_COMMAND, () =>
+      handleVimDateShortcut(1, VIM_CTRL_A_COMMAND)
+    ),
+    vscode.commands.registerCommand(VIM_DECREMENT_COMMAND, () =>
+      handleVimDateShortcut(-1, VIM_CTRL_X_COMMAND)
+    ),
+    vscode.commands.registerCommand(
+      'beancountQuickEdit.setupVscodeVimShortcuts',
+      setupVscodeVimShortcuts
+    ),
     vscode.window.onDidChangeActiveTextEditor(() => void refreshContexts()),
     vscode.window.onDidChangeTextEditorSelection((event) => {
       if (event.textEditor === vscode.window.activeTextEditor) {
@@ -36,6 +62,86 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
 export function deactivate(): void {
   // Nothing to dispose beyond context.subscriptions.
+}
+
+async function handleVimDateShortcut(
+  direction: 1 | -1,
+  fallbackCommand: typeof VIM_CTRL_A_COMMAND | typeof VIM_CTRL_X_COMMAND
+): Promise<void> {
+  const editor = activeBeancountEditor();
+  const modeHandler = await getVimModeHandler();
+
+  if (editor && locateDates(editor) && modeHandler && canHandlePlainVimShortcut(modeHandler)) {
+    await adjustDates(direction);
+    return;
+  }
+
+  await forwardToVSCodeVim(fallbackCommand);
+}
+
+async function getVimModeHandler(): Promise<VimModeHandlerLike | undefined> {
+  const extension = vscode.extensions.getExtension<VSCodeVimExports>(VSCODE_VIM_EXTENSION_ID);
+  if (!extension) {
+    return undefined;
+  }
+
+  try {
+    if (!extension.isActive) {
+      await extension.activate();
+    }
+
+    let api = extension.exports;
+    if (typeof api?.getAndUpdateModeHandler !== 'function') {
+      const main = (extension.packageJSON as { main?: unknown }).main;
+      if (typeof main !== 'string') {
+        return undefined;
+      }
+      const requireFromVim = createRequire(
+        vscode.Uri.joinPath(extension.extensionUri, 'package.json').fsPath
+      );
+      api = requireFromVim(vscode.Uri.joinPath(extension.extensionUri, main).fsPath) as VSCodeVimExports;
+    }
+
+    if (typeof api?.getAndUpdateModeHandler !== 'function') {
+      return undefined;
+    }
+    const modeHandler = await api.getAndUpdateModeHandler();
+    return isVimModeHandlerLike(modeHandler) ? modeHandler : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+async function forwardToVSCodeVim(
+  fallbackCommand: typeof VIM_CTRL_A_COMMAND | typeof VIM_CTRL_X_COMMAND
+): Promise<void> {
+  try {
+    await vscode.commands.executeCommand(fallbackCommand);
+  } catch {
+    void vscode.window.showErrorMessage('VSCodeVim could not handle the Ctrl key command.');
+  }
+}
+
+async function setupVscodeVimShortcuts(): Promise<void> {
+  try {
+    await vscode.env.clipboard.writeText(buildVimKeybindingsSnippet());
+  } catch {
+    void vscode.window.showErrorMessage(
+      'Beancount Quick Edit could not copy the VSCodeVim keybindings.'
+    );
+    return;
+  }
+
+  try {
+    await vscode.commands.executeCommand('workbench.action.openGlobalKeybindingsFile');
+  } catch {
+    // The snippet remains available on the clipboard if the editor cannot be opened.
+  }
+
+  const suffix = vscode.extensions.getExtension(VSCODE_VIM_EXTENSION_ID)
+    ? 'Paste them before the final ]; if another entry already precedes them, add a comma first.'
+    : 'VSCodeVim is not installed yet; install it, then paste them before the final ]. If another entry already precedes them, add a comma first.';
+  void vscode.window.showInformationMessage(`VSCodeVim Ctrl+A/X keybindings copied. ${suffix}`);
 }
 
 async function adjustDates(direction: 1 | -1): Promise<void> {
