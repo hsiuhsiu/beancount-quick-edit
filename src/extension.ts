@@ -10,7 +10,7 @@ import {
 } from './operations';
 import {
   buildVimKeybindingsSnippet,
-  canHandlePlainVimShortcut,
+  consumeVimDateShortcutCount,
   isVimModeHandlerLike,
   VIM_DECREMENT_COMMAND,
   VIM_INCREMENT_COMMAND,
@@ -68,15 +68,33 @@ async function handleVimDateShortcut(
   direction: 1 | -1,
   fallbackCommand: typeof VIM_CTRL_A_COMMAND | typeof VIM_CTRL_X_COMMAND
 ): Promise<void> {
-  const editor = activeBeancountEditor();
+  // Resolve the live handler first so native fallbacks can run inside this
+  // vim.remap task instead of being enqueued behind a rapidly typed next key.
   const modeHandler = await getVimModeHandler();
-
-  if (editor && locateDates(editor) && modeHandler && canHandlePlainVimShortcut(modeHandler)) {
-    await adjustDates(direction);
+  const editor = activeBeancountEditor();
+  if (!editor || !locateDates(editor) || !modeHandler) {
+    await forwardToVSCodeVim(fallbackCommand, modeHandler);
     return;
   }
 
-  await forwardToVSCodeVim(fallbackCommand);
+  if (
+    vscode.window.activeTextEditor !== editor ||
+    editor.document.isClosed ||
+    !locateDates(editor)
+  ) {
+    await forwardToVSCodeVim(fallbackCommand, modeHandler);
+    return;
+  }
+
+  const count = consumeVimDateShortcutCount(modeHandler);
+  if (count === undefined) {
+    await forwardToVSCodeVim(fallbackCommand, modeHandler);
+    return;
+  }
+
+  // The count is now consumed. From here onward this command owns the key and
+  // must not fall back to Vim, even if the edit is rejected at a date boundary.
+  await adjustDates(direction * count);
 }
 
 async function getVimModeHandler(): Promise<VimModeHandlerLike | undefined> {
@@ -113,9 +131,16 @@ async function getVimModeHandler(): Promise<VimModeHandlerLike | undefined> {
 }
 
 async function forwardToVSCodeVim(
-  fallbackCommand: typeof VIM_CTRL_A_COMMAND | typeof VIM_CTRL_X_COMMAND
+  fallbackCommand: typeof VIM_CTRL_A_COMMAND | typeof VIM_CTRL_X_COMMAND,
+  modeHandler?: VimModeHandlerLike
 ): Promise<void> {
   try {
+    if (modeHandler) {
+      await modeHandler.handleKeyEvent(
+        fallbackCommand === VIM_CTRL_A_COMMAND ? '<C-a>' : '<C-x>'
+      );
+      return;
+    }
     await vscode.commands.executeCommand(fallbackCommand);
   } catch {
     void vscode.window.showErrorMessage('VSCodeVim could not handle the Ctrl key command.');
@@ -144,7 +169,7 @@ async function setupVscodeVimShortcuts(): Promise<void> {
   void vscode.window.showInformationMessage(`VSCodeVim Ctrl+A/X keybindings copied. ${suffix}`);
 }
 
-async function adjustDates(direction: 1 | -1): Promise<void> {
+async function adjustDates(amount: number): Promise<void> {
   const editor = activeBeancountEditor();
   if (!editor || editor.document.isClosed) {
     return;
@@ -164,7 +189,7 @@ async function adjustDates(direction: 1 | -1): Promise<void> {
     return;
   }
 
-  const replacements = buildDateReplacements(normalizedTargets, direction);
+  const replacements = buildDateReplacements(normalizedTargets, amount);
   if (!replacements) {
     void vscode.window.showWarningMessage(
       'The requested date adjustment would exceed the supported years 0001–9999.'

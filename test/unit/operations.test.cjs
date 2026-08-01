@@ -40,6 +40,20 @@ describe('multi-cursor operations', () => {
     ]);
   });
 
+  test('applies one count-sized change to every distinct target', () => {
+    const replacements = buildDateReplacements([
+      date({ line: 0, text: '2026-01-30', part: 'day' }),
+      date({ line: 1, text: '2024-01-31', part: 'month' }),
+      date({ line: 2, text: '2024-02-29', part: 'year' })
+    ], 2);
+
+    assert.deepEqual(replacements?.map(({ text }) => text), [
+      '2026-02-01',
+      '2024-03-31',
+      '2026-02-28'
+    ]);
+  });
+
   test('returns no replacements when any cursor would cross the year range', () => {
     assert.equal(
       buildDateReplacements([

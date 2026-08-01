@@ -38,7 +38,7 @@ export function normalizeDateTargets(targets: LocatedDate[]): LocatedDate[] | un
 
 export function buildDateReplacements(
   targets: LocatedDate[],
-  direction: 1 | -1
+  amount: number
 ): DateReplacement[] | undefined {
   const uniqueTargets = normalizeDateTargets(targets);
   if (!uniqueTargets) {
@@ -47,7 +47,7 @@ export function buildDateReplacements(
 
   const replacements: DateReplacement[] = [];
   for (const target of uniqueTargets) {
-    const text = adjustIsoDate(target.text, target.part, direction);
+    const text = adjustIsoDate(target.text, target.part, amount);
     if (!text) {
       return undefined;
     }
