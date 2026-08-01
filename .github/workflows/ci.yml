@@ -1,0 +1,100 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Pin npm
+        run: npm install --global npm@11.17.0
+
+      - name: Install exact dependencies
+        run: npm ci --strict-allow-scripts
+
+      - name: Audit dependencies
+        run: npm audit
+
+      - name: Type-check
+        run: npm run check
+
+      - name: Run unit tests
+        run: npm test
+
+      - name: Run Extension Host tests
+        run: xvfb-run -a npm run test:integration
+
+      - name: Inspect packaged files
+        run: npm run package:inspect
+
+      - name: Build VSIX
+        run: npm run package
+
+      - name: Record VSIX checksum
+        run: sha256sum beancount-quick-edit-*.vsix > beancount-quick-edit-0.1.0.vsix.sha256
+
+      - name: Retain tested VSIX
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: beancount-quick-edit-vsix
+          path: |
+            beancount-quick-edit-*.vsix
+            beancount-quick-edit-*.vsix.sha256
+          if-no-files-found: error
+
+  integration:
+    name: VS Code ${{ matrix.vscode }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            vscode: stable
+          - os: ubuntu-22.04
+            vscode: 1.85.2
+          - os: macos-latest
+            vscode: stable
+          - os: windows-latest
+            vscode: stable
+    env:
+      VSCODE_TEST_VERSION: ${{ matrix.vscode }}
+    steps:
+      - name: Check out source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Pin npm
+        run: npm install --global npm@11.17.0
+
+      - name: Install exact dependencies
+        run: npm ci --strict-allow-scripts
+
+      - name: Run Extension Host tests on Linux
+        if: runner.os == 'Linux'
+        run: xvfb-run -a npm run test:integration
+
+      - name: Run Extension Host tests
+        if: runner.os != 'Linux'
+        run: npm run test:integration

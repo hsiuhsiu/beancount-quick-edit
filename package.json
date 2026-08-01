@@ -1,0 +1,153 @@
+{
+  "name": "beancount-quick-edit",
+  "displayName": "Beancount Quick Edit",
+  "description": "Cursor-aware date adjustment and account copying for Beancount files.",
+  "version": "0.1.0",
+  "publisher": "hsiuhsiu",
+  "license": "MIT",
+  "author": "hsiuhsiu",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Other"
+  ],
+  "keywords": [
+    "beancount",
+    "accounting",
+    "ledger",
+    "date",
+    "cursor",
+    "productivity"
+  ],
+  "pricing": "Free",
+  "icon": "images/icon.png",
+  "galleryBanner": {
+    "color": "#172554",
+    "theme": "dark"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hsiuhsiu/beancount-quick-edit.git"
+  },
+  "homepage": "https://github.com/hsiuhsiu/beancount-quick-edit#readme",
+  "bugs": {
+    "url": "https://github.com/hsiuhsiu/beancount-quick-edit/issues"
+  },
+  "main": "./dist/extension.js",
+  "extensionKind": [
+    "ui"
+  ],
+  "activationEvents": [
+    "onLanguage:beancount"
+  ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": true
+    },
+    "virtualWorkspaces": true
+  },
+  "contributes": {
+    "languages": [
+      {
+        "id": "beancount",
+        "aliases": [
+          "Beancount",
+          "beancount"
+        ],
+        "extensions": [
+          ".bean",
+          ".beancount"
+        ]
+      }
+    ],
+    "commands": [
+      {
+        "command": "beancountQuickEdit.incrementDatePart",
+        "title": "Increment Date Part",
+        "category": "Beancount Quick Edit",
+        "enablement": "editorLangId == beancount && beancountQuickEdit.cursorInDate && !editorReadonly"
+      },
+      {
+        "command": "beancountQuickEdit.decrementDatePart",
+        "title": "Decrement Date Part",
+        "category": "Beancount Quick Edit",
+        "enablement": "editorLangId == beancount && beancountQuickEdit.cursorInDate && !editorReadonly"
+      },
+      {
+        "command": "beancountQuickEdit.copyAccount",
+        "title": "Copy Account at Cursor",
+        "category": "Beancount Quick Edit",
+        "enablement": "editorLangId == beancount && beancountQuickEdit.cursorInAccount"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "beancountQuickEdit.incrementDatePart",
+        "key": "alt+up",
+        "mac": "alt+up",
+        "when": "editorTextFocus && editorLangId == beancount && beancountQuickEdit.cursorInDate && !editorReadonly"
+      },
+      {
+        "command": "beancountQuickEdit.decrementDatePart",
+        "key": "alt+down",
+        "mac": "alt+down",
+        "when": "editorTextFocus && editorLangId == beancount && beancountQuickEdit.cursorInDate && !editorReadonly"
+      },
+      {
+        "command": "beancountQuickEdit.copyAccount",
+        "key": "ctrl+alt+c",
+        "mac": "cmd+alt+c",
+        "when": "editorTextFocus && editorLangId == beancount && beancountQuickEdit.cursorInAccount"
+      }
+    ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "beancountQuickEdit.incrementDatePart",
+          "when": "editorLangId == beancount"
+        },
+        {
+          "command": "beancountQuickEdit.decrementDatePart",
+          "when": "editorLangId == beancount"
+        },
+        {
+          "command": "beancountQuickEdit.copyAccount",
+          "when": "editorLangId == beancount"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "clean": "node scripts/clean.mjs",
+    "compile": "npm run clean && tsc -p tsconfig.json && node scripts/bundle.mjs",
+    "check": "tsc -p tsconfig.json --noEmit",
+    "test:unit": "npm run compile && node --test test/unit/*.test.cjs",
+    "test:integration": "npm run compile && vscode-test",
+    "test": "npm run test:unit",
+    "package:inspect": "vsce ls --tree",
+    "package": "vsce package --no-dependencies --out beancount-quick-edit-0.1.0.vsix",
+    "vscode:prepublish": "npm run compile"
+  },
+  "overrides": {
+    "diff": "8.0.3",
+    "serialize-javascript": "7.0.7"
+  },
+  "allowScripts": {
+    "@vscode/vsce-sign@2.0.9": true,
+    "esbuild@0.28.1": true,
+    "keytar@7.9.0": true
+  },
+  "packageManager": "npm@11.17.0",
+  "devDependencies": {
+    "@types/mocha": "10.0.10",
+    "@types/node": "26.1.2",
+    "@types/vscode": "1.85.0",
+    "@vscode/test-cli": "0.0.15",
+    "@vscode/test-electron": "3.1.0",
+    "@vscode/vsce": "3.9.2",
+    "esbuild": "0.28.1",
+    "typescript": "7.0.2"
+  }
+}

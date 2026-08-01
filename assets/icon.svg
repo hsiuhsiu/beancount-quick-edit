@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Beancount Quick Edit icon</title>
+  <desc id="desc">A calendar date, an account path, and quick adjustment arrows.</desc>
+  <rect width="512" height="512" rx="112" fill="#172554"/>
+  <rect x="72" y="72" width="368" height="368" rx="64" fill="#f8fafc"/>
+  <path d="M136 72h240a64 64 0 0 1 64 64v44H72v-44a64 64 0 0 1 64-64Z" fill="#14b8a6"/>
+  <rect x="138" y="48" width="32" height="72" rx="16" fill="#dbeafe"/>
+  <rect x="342" y="48" width="32" height="72" rx="16" fill="#dbeafe"/>
+
+  <rect x="112" y="220" width="116" height="44" rx="16" fill="#1e3a8a"/>
+  <rect x="250" y="220" width="58" height="44" rx="16" fill="#3b82f6"/>
+  <rect x="330" y="220" width="58" height="44" rx="16" fill="#3b82f6"/>
+  <rect x="234" y="232" width="8" height="8" rx="4" fill="#64748b"/>
+  <rect x="234" y="248" width="8" height="8" rx="4" fill="#64748b"/>
+  <rect x="314" y="232" width="8" height="8" rx="4" fill="#64748b"/>
+  <rect x="314" y="248" width="8" height="8" rx="4" fill="#64748b"/>
+
+  <rect x="112" y="316" width="76" height="36" rx="18" fill="#1e3a8a"/>
+  <circle cx="204" cy="326" r="6" fill="#64748b"/>
+  <circle cx="204" cy="342" r="6" fill="#64748b"/>
+  <rect x="220" y="316" width="78" height="36" rx="18" fill="#2563eb"/>
+  <circle cx="314" cy="326" r="6" fill="#64748b"/>
+  <circle cx="314" cy="342" r="6" fill="#64748b"/>
+  <rect x="330" y="316" width="58" height="36" rx="18" fill="#60a5fa"/>
+
+  <path d="m350 286 34-34 34 34" fill="none" stroke="#f59e0b" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="m350 382 34 34 34-34" fill="none" stroke="#f59e0b" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

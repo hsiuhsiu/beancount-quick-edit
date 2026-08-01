@@ -1,0 +1,8 @@
+node_modules/
+lib/
+dist/
+.vscode-test/
+*.vsix
+*.vsix.sha256
+*.log
+.DS_Store
