@@ -8,6 +8,7 @@ export interface CalendarDate {
 
 const MIN_YEAR = 1;
 const MAX_YEAR = 9999;
+const DAYS_BEFORE_MONTH = [0, 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
 
 export function isLeapYear(year: number): boolean {
   return year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
@@ -55,76 +56,58 @@ export function formatIsoDate(date: CalendarDate): string {
 export function adjustCalendarDate(
   date: CalendarDate,
   part: DatePart,
-  direction: 1 | -1
+  amount: number
 ): CalendarDate | undefined {
-  if (!isValidCalendarDate(date)) {
+  if (!isValidCalendarDate(date) || !Number.isSafeInteger(amount)) {
     return undefined;
   }
 
   if (part === 'day') {
-    return adjustDay(date, direction);
+    return adjustDay(date, amount);
   }
   if (part === 'month') {
-    return adjustMonth(date, direction);
+    return adjustMonth(date, amount);
   }
-  return adjustYear(date, direction);
+  if (part === 'year') {
+    return adjustYear(date, amount);
+  }
+  return undefined;
 }
 
 export function adjustIsoDate(
   value: string,
   part: DatePart,
-  direction: 1 | -1
+  amount: number
 ): string | undefined {
   const date = parseIsoDate(value);
   if (!date) {
     return undefined;
   }
-  const adjusted = adjustCalendarDate(date, part, direction);
+  const adjusted = adjustCalendarDate(date, part, amount);
   return adjusted ? formatIsoDate(adjusted) : undefined;
 }
 
-function adjustDay(date: CalendarDate, direction: 1 | -1): CalendarDate | undefined {
-  let { year, month, day } = date;
-  day += direction;
-
-  if (direction === 1 && day > daysInMonth(year, month)) {
-    day = 1;
-    month += 1;
-    if (month > 12) {
-      month = 1;
-      year += 1;
-    }
-  } else if (direction === -1 && day < 1) {
-    month -= 1;
-    if (month < 1) {
-      month = 12;
-      year -= 1;
-    }
-    if (year >= MIN_YEAR) {
-      day = daysInMonth(year, month);
-    }
-  }
-
-  const result = { year, month, day };
-  return isValidCalendarDate(result) ? result : undefined;
+function adjustDay(date: CalendarDate, amount: number): CalendarDate | undefined {
+  const ordinal = dateToOrdinal(date) + amount;
+  const maximumOrdinal = daysBeforeYear(MAX_YEAR + 1) - 1;
+  return Number.isSafeInteger(ordinal) && ordinal >= 0 && ordinal <= maximumOrdinal
+    ? ordinalToDate(ordinal)
+    : undefined;
 }
 
-function adjustMonth(date: CalendarDate, direction: 1 | -1): CalendarDate | undefined {
-  let { year, month } = date;
-  month += direction;
-
-  if (month > 12) {
-    month = 1;
-    year += 1;
-  } else if (month < 1) {
-    month = 12;
-    year -= 1;
-  }
-
-  if (year < MIN_YEAR || year > MAX_YEAR) {
+function adjustMonth(date: CalendarDate, amount: number): CalendarDate | undefined {
+  const monthIndex = (date.year - 1) * 12 + date.month - 1 + amount;
+  const maximumMonthIndex = MAX_YEAR * 12 - 1;
+  if (
+    !Number.isSafeInteger(monthIndex) ||
+    monthIndex < 0 ||
+    monthIndex > maximumMonthIndex
+  ) {
     return undefined;
   }
 
+  const year = Math.floor(monthIndex / 12) + 1;
+  const month = (monthIndex % 12) + 1;
   return {
     year,
     month,
@@ -132,9 +115,9 @@ function adjustMonth(date: CalendarDate, direction: 1 | -1): CalendarDate | unde
   };
 }
 
-function adjustYear(date: CalendarDate, direction: 1 | -1): CalendarDate | undefined {
-  const year = date.year + direction;
-  if (year < MIN_YEAR || year > MAX_YEAR) {
+function adjustYear(date: CalendarDate, amount: number): CalendarDate | undefined {
+  const year = date.year + amount;
+  if (!Number.isSafeInteger(year) || year < MIN_YEAR || year > MAX_YEAR) {
     return undefined;
   }
 
@@ -143,4 +126,54 @@ function adjustYear(date: CalendarDate, direction: 1 | -1): CalendarDate | undef
     month: date.month,
     day: Math.min(date.day, daysInMonth(year, date.month))
   };
+}
+
+function dateToOrdinal(date: CalendarDate): number {
+  return (
+    daysBeforeYear(date.year) +
+    (DAYS_BEFORE_MONTH[date.month] ?? 0) +
+    (date.month > 2 && isLeapYear(date.year) ? 1 : 0) +
+    date.day -
+    1
+  );
+}
+
+function ordinalToDate(ordinal: number): CalendarDate {
+  let lowerYear = MIN_YEAR;
+  let upperYear = MAX_YEAR;
+  while (lowerYear < upperYear) {
+    const candidate = Math.ceil((lowerYear + upperYear) / 2);
+    if (daysBeforeYear(candidate) <= ordinal) {
+      lowerYear = candidate;
+    } else {
+      upperYear = candidate - 1;
+    }
+  }
+
+  const year = lowerYear;
+  const dayOfYear = ordinal - daysBeforeYear(year);
+  let month = 12;
+  while (month > 1 && daysBeforeMonth(year, month) > dayOfYear) {
+    month -= 1;
+  }
+
+  return {
+    year,
+    month,
+    day: dayOfYear - daysBeforeMonth(year, month) + 1
+  };
+}
+
+function daysBeforeYear(year: number): number {
+  const completedYears = year - 1;
+  return (
+    completedYears * 365 +
+    Math.floor(completedYears / 4) -
+    Math.floor(completedYears / 100) +
+    Math.floor(completedYears / 400)
+  );
+}
+
+function daysBeforeMonth(year: number, month: number): number {
+  return (DAYS_BEFORE_MONTH[month] ?? 0) + (month > 2 && isLeapYear(year) ? 1 : 0);
 }

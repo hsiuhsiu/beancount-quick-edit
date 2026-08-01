@@ -43,6 +43,15 @@ extension, Beancount Quick Edit can use Vim's familiar number keys for calendar-
 | `Ctrl+A` | Increase the year, month, or day at the caret |
 | `Ctrl+X` | Decrease the year, month, or day at the caret |
 
+A numeric prefix changes the selected component by that many calendar units in one edit:
+
+```text
+3 Ctrl+A  on the day   2026-01-30 → 2026-02-02
+2 Ctrl+A  on the month 2024-01-31 → 2024-03-31
+4 Ctrl+A  on the year  2024-02-29 → 2028-02-29
+2 Ctrl+X  on the day   2024-03-01 → 2024-02-28
+```
+
 On macOS these use the Control key, not Command. To enable them:
 
 1. Open the Command Palette.
@@ -50,16 +59,20 @@ On macOS these use the Control key, not Command. To enable them:
 3. The command copies two keybinding entries and opens `keybindings.json`. Paste them before the
    final `]`. If the file already contains entries, add a comma after the existing final entry first.
 
+If you used the setup command in version 0.2.0, run it again and replace those two entries. Version
+0.3.0 removes asynchronous date and mode conditions from the copied bindings so rapid cursor or
+mode changes cannot intermittently fall through to a different handler.
+
 This one-time setup is necessary because VS Code gives user keybindings reliable priority over
 VSCodeVim's defaults; one extension's default keybindings cannot reliably override another's.
 The setup command does not edit the file for you. The copied bindings use VSCodeVim's own
 `vim.remap` command, so pending keys are processed in the same queue as VSCodeVim's native actions.
 
-The bindings take effect only in VSCodeVim Normal mode when every caret is on a valid date in a
-writable Beancount editor. Insert and Visual modes, non-date positions, other languages, and
-read-only editors retain VSCodeVim's behavior. A plain, idle `Ctrl+A` or `Ctrl+X` uses calendar
-arithmetic. If a Vim count or another command prefix is pending, the key is returned to VSCodeVim
-instead; for example, `3 Ctrl+A` keeps Vim's native numeric behavior and consumes the count safely.
+At execution time, Beancount Quick Edit handles the key only in VSCodeVim Normal mode when every
+caret is on a valid date in a writable Beancount editor. A plain key changes one calendar unit; a
+pure numeric prefix changes that many days, months, or years directly and is consumed exactly once.
+Insert and Visual modes, non-date positions, other languages, read-only editors, and pending Vim
+operators or macros retain VSCodeVim's native behavior.
 
 The compatibility path is tested with VSCodeVim 1.32.4 and fails closed to native VSCodeVim
 handling if the inspected pending-command state is not recognized.
@@ -108,9 +121,11 @@ Beancount Quick Edit:
 
 VSCodeVim does not publish its pending-command state through VS Code's public extension API. After
 VS Code activates the already-installed VSCodeVim extension, the optional adapter reuses that same
-local module and inspects only its in-process command state. It does not download or launch any
-external program, and it does not execute workspace-provided code. If that internal shape changes,
-the shortcut delegates to VSCodeVim instead of editing the date.
+local module and inspects its in-process command state. When it recognizes only a numeric prefix,
+it consumes that prefix by replacing VSCodeVim's pending-command record with a freshly constructed
+default record before editing the date. It does not download or launch any external program, and it
+does not execute workspace-provided code. If that internal shape changes, the shortcut delegates to
+VSCodeVim instead of editing the date.
 
 It supports untrusted and virtual workspaces in desktop VS Code because its behavior does not
 depend on workspace code or workspace filesystem access. The extension does not include a browser
@@ -144,7 +159,7 @@ npm run test:integration
 npm run package
 ```
 
-`npm run package` creates `beancount-quick-edit-0.2.0.vsix`. See [CONTRIBUTING.md](CONTRIBUTING.md) for the release workflow.
+`npm run package` creates `beancount-quick-edit-0.3.0.vsix`. See [CONTRIBUTING.md](CONTRIBUTING.md) for the release workflow.
 
 ## License
 

@@ -3,8 +3,8 @@ const { describe, test } = require('node:test');
 const manifest = require('../../package.json');
 
 describe('extension manifest', () => {
-  test('uses the 0.2.0 minor version for VSCodeVim shortcut support', () => {
-    assert.equal(manifest.version, '0.2.0');
+  test('uses the 0.3.0 minor version for count-aware VSCodeVim shortcuts', () => {
+    assert.equal(manifest.version, '0.3.0');
   });
 
   test('ships no runtime dependencies or install lifecycle scripts', () => {
@@ -47,5 +47,17 @@ describe('extension manifest', () => {
       ['ctrl+a', 'ctrl+x'].includes(key)
     );
     assert.deepEqual(ctrlBindings, []);
+
+    const vimCommands = manifest.contributes.commands.filter(({ command }) =>
+      ['beancountQuickEdit.vimIncrementDatePart', 'beancountQuickEdit.vimDecrementDatePart'].includes(
+        command
+      )
+    );
+    for (const { enablement } of vimCommands) {
+      assert.match(enablement, /editorLangId == beancount/);
+      assert.match(enablement, /vim\.active/);
+      assert.doesNotMatch(enablement, /cursorInDate/);
+      assert.doesNotMatch(enablement, /vim\.mode/);
+    }
   });
 });

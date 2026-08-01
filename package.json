@@ -2,7 +2,7 @@
   "name": "beancount-quick-edit",
   "displayName": "Beancount Quick Edit",
   "description": "Cursor-aware date adjustment and account copying for Beancount files.",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "publisher": "hsiuhsiu",
   "license": "MIT",
   "author": "hsiuhsiu",
@@ -87,13 +87,13 @@
         "command": "beancountQuickEdit.vimIncrementDatePart",
         "title": "Increment Date Part (VSCodeVim)",
         "category": "Beancount Quick Edit",
-        "enablement": "editorLangId == beancount && beancountQuickEdit.cursorInDate && !editorReadonly && vim.active && vim.mode == 'Normal'"
+        "enablement": "editorLangId == beancount && !editorReadonly && vim.active"
       },
       {
         "command": "beancountQuickEdit.vimDecrementDatePart",
         "title": "Decrement Date Part (VSCodeVim)",
         "category": "Beancount Quick Edit",
-        "enablement": "editorLangId == beancount && beancountQuickEdit.cursorInDate && !editorReadonly && vim.active && vim.mode == 'Normal'"
+        "enablement": "editorLangId == beancount && !editorReadonly && vim.active"
       },
       {
         "command": "beancountQuickEdit.setupVscodeVimShortcuts",
@@ -154,7 +154,7 @@
     "test:integration": "npm run compile && vscode-test",
     "test": "npm run test:unit",
     "package:inspect": "vsce ls --tree",
-    "package": "vsce package --no-dependencies --out beancount-quick-edit-0.2.0.vsix",
+    "package": "vsce package --no-dependencies --out beancount-quick-edit-0.3.0.vsix",
     "vscode:prepublish": "npm run compile"
   },
   "overrides": {
